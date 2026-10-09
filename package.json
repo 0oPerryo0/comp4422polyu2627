@@ -1,0 +1,15 @@
+{
+  "name": "comp4422-solar-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "COMP4422 M1: a solar-system explorer built with raw WebGL2",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "test:browser": "node scripts/check-browser.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

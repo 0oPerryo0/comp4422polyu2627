@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e18">
+  <meta name="description" content="A raw WebGL2 solar-system explorer for COMP4422 milestone one.">
+  <title>Solar Explorer · COMP4422 M1</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Solar Explorer home">
+      <span class="brand-icon" aria-hidden="true">◉</span>
+      <span>SOLAR <span class="brand-light">EXPLORER</span></span>
+    </a>
+    <div class="project-tag">COMP4422 <span>/</span> MILESTONE 01</div>
+    <span class="renderer-status" id="renderer-status" role="status">Initializing WebGL2…</span>
+  </header>
+
+  <main class="workspace">
+    <aside class="sidebar" aria-label="Explorer controls">
+      <div class="intro">
+        <p class="eyebrow">GEOMETRY & CAMERA</p>
+        <h1>A little space<br> to explore.</h1>
+        <p class="intro-copy">Eight planets. One shared sphere.<br> A first step into raw WebGL2.</p>
+      </div>
+
+      <section class="navigation" aria-labelledby="navigation-heading">
+        <div class="section-heading">
+          <h2 id="navigation-heading">DESTINATION</h2>
+          <span>01—11</span>
+        </div>
+        <label class="sr-only" for="focus-select">Focus the camera on a destination</label>
+        <select id="focus-select" disabled>
+          <option value="overview">Whole solar system</option>
+        </select>
+        <div class="quick-destinations">
+          <button id="earth-button" class="destination-button" disabled>
+            <span class="destination-dot earth-dot" aria-hidden="true"></span>Visit Earth <span aria-hidden="true">↗</span>
+          </button>
+          <button id="ship-button" class="destination-button" disabled>
+            <span class="destination-dot ship-dot" aria-hidden="true"></span>Inspect OBJ <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="selection" aria-labelledby="selection-name">
+        <p class="eyebrow" id="selection-kind">OVERVIEW</p>
+        <h2 id="selection-name">The solar system</h2>
+        <p id="selection-description">Drag to discover the scene. Choose a destination to inspect the geometry up close.</p>
+        <button class="text-button" id="reset-button" disabled><span aria-hidden="true">↺</span> Reset view</button>
+      </section>
+
+      <section class="controls-guide" aria-labelledby="controls-heading">
+        <h2 id="controls-heading">TAKE THE CONTROLS</h2>
+        <dl>
+          <div><dt>Orbit</dt><dd>Drag / arrow keys</dd></div>
+          <div><dt>Zoom</dt><dd>Scroll / + −</dd></div>
+          <div><dt>Pan</dt><dd>Shift + drag / WASD</dd></div>
+        </dl>
+        <p>Click the scene to use keyboard controls.</p>
+      </section>
+      <p class="scope-note">M1 is a static scene. Textures, orbital animation, and lighting arrive in M2 / M3.</p>
+    </aside>
+
+    <section class="viewport" id="viewport" aria-label="Interactive solar-system scene">
+      <canvas id="scene" tabindex="0" aria-label="3D solar system. Drag to orbit, scroll to zoom, Shift-drag to pan. Arrow keys orbit, WASD pan, plus and minus zoom."></canvas>
+      <div class="scene-labels" id="scene-labels" aria-label="Scene destinations"></div>
+      <div class="viewport-top">
+        <div><p class="eyebrow">LOCAL SPACE</p><p class="view-title" id="view-title">System overview</p></div>
+        <span class="view-badge">PERSPECTIVE VIEW</span>
+      </div>
+      <div class="viewport-bottom">
+        <p><span class="live-dot" aria-hidden="true"></span>RAW WEBGL2 <span class="separator">/</span> DEPTH TEST ON</p>
+        <p>Sizes & distances are illustrative</p>
+      </div>
+      <div class="loading-screen" id="loading-screen" role="status">
+        <span class="loading-orbit" aria-hidden="true">◉</span>
+        <p>Preparing your view of space…</p>
+      </div>
+      <div class="error-panel" id="error-panel" role="alert" hidden>
+        <h2>The scene could not start.</h2>
+        <p id="error-message"></p>
+        <p>Run <code>npm start</code>, open the localhost URL, and use a browser with WebGL2 enabled.</p>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <span>BUILT FROM FIRST PRINCIPLES</span>
+    <span id="geometry-status">Own Vec3 / Mat4 · Indexed geometry · Loaded OBJ</span>
+  </footer>
+</body>
+</html>
