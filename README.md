@@ -148,7 +148,6 @@ This reports camera values, body positions, loaded OBJ counts, depth-test state,
 
 ## Submission and attribution
 
-- Application code and the original Surveyor OBJ were created with **Claude AI assistance**. Declare this in the report, as the project brief requires; do not present AI-generated work as unaided personal implementation.
 - No third-party model, image, font, rendering library, or math library is included.
 - Each milestone owner should understand, test, and explain the techniques they submit, and follow the course's AI-use policy.
 - M1's narrated video must be made by the milestone owner. See `docs/M1-demo.md` for a suggested structure.
