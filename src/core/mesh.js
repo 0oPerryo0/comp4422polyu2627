@@ -45,4 +45,10 @@ export class Mesh {
     gl.bindVertexArray(this.vao);
     gl.drawElements(this.mode, this.count, this.indexType, 0);
   }
+
+  // free the GPU buffers and VAO
+  dispose() {
+    for (const buffer of this.buffers) this.gl.deleteBuffer(buffer);
+    this.gl.deleteVertexArray(this.vao);
+  }
 }

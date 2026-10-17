@@ -27,7 +27,6 @@ function showError(error) {
 async function start() {
   const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
   if (!gl) throw new Error('WebGL2 is not available in this browser.');
-  console.log('here?');
   canvas.addEventListener('webglcontextlost', (event) => {
     event.preventDefault();
     contextLost = true;

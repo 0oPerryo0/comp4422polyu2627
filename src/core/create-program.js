@@ -1,5 +1,5 @@
 import { readShader } from './read-shader.js';
-import { compile } from './complie-shader.js';
+import { compile } from './compile-shader.js';
 
 /*
   Create a program (same as in lab)
@@ -12,20 +12,26 @@ export async function createProgram(gl, vertexURL, fragmentURL) {
   ]);
 
   const program = gl.createProgram();
-  const vertexShader = compile(gl, gl.VERTEX_SHADER, sources[0]);
-  const fragmentShader = compile(gl, gl.FRAGMENT_SHADER, sources[1]);
+  const shaders = [];
 
-  gl.attachShader(program, vertexShader);
-  gl.attachShader(program, fragmentShader);
-  gl.linkProgram(program);
+  // if anything fails, delete the program; the shaders are always deleted
+  try {
+    shaders.push(compile(gl, gl.VERTEX_SHADER, sources[0]));
+    shaders.push(compile(gl, gl.FRAGMENT_SHADER, sources[1]));
 
-  gl.deleteShader(vertexShader);
-  gl.deleteShader(fragmentShader);
+    for (const shader of shaders) gl.attachShader(program, shader);
+    gl.linkProgram(program);
 
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    // read the log before the program is deleted in the catch block
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(`Shader linking failed: ${gl.getProgramInfoLog(program)}`);
+    }
+
+    return program;
+  } catch (error) {
     gl.deleteProgram(program);
-    throw new Error(`Shader linking failed: ${gl.getProgramInfoLog(program)}`);
+    throw error;
+  } finally {
+    for (const shader of shaders) gl.deleteShader(shader);
   }
-
-  return program;
 }

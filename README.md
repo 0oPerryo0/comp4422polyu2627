@@ -38,14 +38,14 @@ There are eight planets, the Sun, the Moon, and an original loaded spacecraft. P
 
 | Brief requirement     | Implementation                                               | What to demonstrate                                                              |
 | --------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Own Vec3/Mat4 library | `src/math.js`: `Vec3`, `Mat4`                                | Vector operations, matrix multiplication, perspective and look-at                |
-| Indexed meshes        | `src/geometry.js`: `createSphere`; `src/mesh.js`: `Mesh`     | Shared sphere vertex/index buffers, VAOs                                         |
-| Loaded `.obj`         | `src/obj-loader.js`; `assets/models/surveyor.obj`            | Fetch, parse, triangulate and inspect the spacecraft                             |
-| `drawElements`        | `src/mesh.js`: `draw`                                        | One index buffer supplies the triangle indices                                   |
-| Model–view–projection | `src/solar-system.js`, `src/camera.js`, `shaders/scene.vert` | CPU model/view/projection matrices and their shader multiplication               |
-| Perspective camera    | `Mat4.perspective` and `OrbitCamera.projection`              | Perspective changes as you inspect different objects                             |
-| Depth testing         | `src/main.js`: `gl.enable(gl.DEPTH_TEST)`                    | Correct near/far visibility as you orbit; color **and depth** cleared each frame |
-| Controllable camera   | `src/camera.js`: `OrbitCamera`                               | Orbit, zoom, pan, focus and reset                                                |
+| Own Vec3/Mat4 library | `src/math/vec3.js`: `Vec3`; `src/math/mat4.js`: `Mat4`                   | Vector operations, matrix multiplication, perspective and look-at                |
+| Indexed meshes        | `src/geometry/create-sphere.js`: `createSphere`; `src/core/mesh.js`: `Mesh` | Shared sphere vertex/index buffers, VAOs                                       |
+| Loaded `.obj`         | `src/loaders/obj-loader.js`, `src/loaders/obj-parser.js`; `assets/models/surveyor.obj` | Fetch, parse, triangulate and inspect the spacecraft                |
+| `drawElements`        | `src/core/mesh.js`: `draw`                                               | One index buffer supplies the triangle indices                                   |
+| Model–view–projection | `src/scene/solar-system.js`, `src/scene/camera.js`, `shaders/scene.vert` | CPU model/view/projection matrices and their shader multiplication               |
+| Perspective camera    | `Mat4.perspective` and `OrbitCamera.projection`                          | Perspective changes as you inspect different objects                             |
+| Depth testing         | `src/main.js`: `gl.enable(gl.DEPTH_TEST)`                                | Correct near/far visibility as you orbit; color **and depth** cleared each frame |
+| Controllable camera   | `src/scene/camera.js`: `OrbitCamera`                                     | Orbit, zoom, pan, focus and reset                                                |
 
 **M2/M3 are deliberately not finished.** M1 needs simple shaders to draw anything, so starter GLSL ES 3.00 shaders and a render loop exist. However, there is no texture sampling, orbital/spin animation, Blinn–Phong illumination, or scene graph yet. The sphere's modest color gradient is assigned to vertices; it is not lighting. The Sun is not yet a light source. UVs and normals are stored on the CPU for later work but are not bound to shader attributes in M1.
 
@@ -107,13 +107,26 @@ styles.css                  Responsive explorer layout
 server.js                   Dependency-free localhost HTTP server
 src/
   main.js                   Setup, draw loop, UI, projection of labels
-  math.js                   Own Vec3 / Mat4 library
-  camera.js                 Perspective orbit camera and input
-  geometry.js               Indexed sphere, orbit and star generation
-  mesh.js                   VAO/VBO/EBO setup and drawElements
-  obj-loader.js             OBJ fetch and parser
-  shader.js                 Shader compilation and linking
-  solar-system.js           Static body definitions and model matrices
+  core/
+    mesh.js                 VAO/VBO/EBO setup and drawElements
+    read-shader.js          Shader source fetch
+    compile-shader.js       Shader compilation
+    create-program.js       Shader program linking
+  geometry/
+    create-sphere.js        Indexed unit sphere
+    create-orbit.js         Orbit circle
+    create-stars.js         Deterministic star background
+    mesh-data.js            Typed-array mesh data helper
+  loaders/
+    obj-loader.js           OBJ fetch
+    obj-parser.js           OBJ parser
+  math/
+    vec3.js                 Own Vec3 library
+    mat4.js                 Own Mat4 library
+  scene/
+    camera.js               Perspective orbit camera and input
+    solar-system.js         Static body definitions and model matrices
+  */index.js                Re-exports for each folder
 shaders/
   scene.vert                Model–view–projection and vertex colors
   scene.frag                Simple color output, no textures/lighting
@@ -153,24 +166,3 @@ This reports camera values, body positions, loaded OBJ counts, depth-test state,
 - Each milestone owner should understand, test, and explain the techniques they submit, and follow the course's AI-use policy.
 - M1's narrated video must be made by the milestone owner. See `docs/M1-demo.md` for a suggested structure.
 - This repository is the M1 source implementation, not a submitted milestone video or final report.
-
-src/
-├── core/
-│ ├── camera.js
-│ ├── create-program.js
-│ ├── compile-shader.js
-│ ├── read-shader.js
-│ └── mesh.js
-├── geometry/
-│ ├── create-orbit.js
-│ ├── create-sphere.js
-│ ├── create-stars.js
-│ └── mesh-data.js
-├── loaders/
-│ └── obj-loader.js
-├── math/
-│ ├── mat4.js
-│ └── vec3.js
-├── scene/
-│ └── solar-system.js (or planet entities)
-└── main.js
