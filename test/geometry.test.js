@@ -1,14 +1,18 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createSphere, createOrbit, createStars } from '../src/geometry.js';
-import { Vec3 } from '../src/math.js';
+// import { createSphere, createOrbit, createStars } from "../src/geometry.js";
+import { createStars } from '../src/geometry/create-stars.js';
+import { createOrbit } from '../src/geometry/create-orbit.js';
+import { createSphere } from '../src/geometry/create-sphere.js';
+// import { Vec3 } from '../src/math.js';
+import { Vec3 } from '../src/math/vec3.js';
 
 function validate(data) {
   const count = data.positions.length / 3;
   assert.equal(data.colors.length, data.positions.length);
   assert.ok(data.positions.every(Number.isFinite));
   assert.ok(data.colors.every(Number.isFinite));
-  assert.ok(data.indices.every(index => index >= 0 && index < count));
+  assert.ok(data.indices.every((index) => index >= 0 && index < count));
 }
 
 test('sphere is an indexed unit sphere with normals and UVs', () => {
@@ -18,18 +22,24 @@ test('sphere is an indexed unit sphere with normals and UVs', () => {
   assert.equal(sphere.indices.length, 12 * 18 * 6);
   assert.equal(sphere.normals.length, sphere.positions.length);
   assert.equal(sphere.uvs.length, 13 * 19 * 2);
-  assert.ok(sphere.uvs.every(value => value >= 0 && value <= 1));
+  assert.ok(sphere.uvs.every((value) => value >= 0 && value <= 1));
   for (let i = 0; i < sphere.positions.length; i += 3) {
-    assert.ok(Math.abs(Vec3.length(sphere.positions.subarray(i, i + 3)) - 1) < 1e-6);
+    assert.ok(
+      Math.abs(Vec3.length(sphere.positions.subarray(i, i + 3)) - 1) < 1e-6,
+    );
   }
 });
 
 test('sphere triangle winding faces outward for back-face culling', () => {
   const sphere = createSphere(12, 18);
   for (let i = 0; i < sphere.indices.length; i += 3) {
-    const triangle = [...sphere.indices.subarray(i, i + 3)]
-      .map(index => sphere.positions.subarray(index * 3, index * 3 + 3));
-    const normal = Vec3.cross(Vec3.subtract(triangle[1], triangle[0]), Vec3.subtract(triangle[2], triangle[0]));
+    const triangle = [...sphere.indices.subarray(i, i + 3)].map((index) =>
+      sphere.positions.subarray(index * 3, index * 3 + 3),
+    );
+    const normal = Vec3.cross(
+      Vec3.subtract(triangle[1], triangle[0]),
+      Vec3.subtract(triangle[2], triangle[0]),
+    );
     if (Vec3.length(normal) < 1e-7) continue; // Pole triangles can be degenerate.
     assert.ok(Vec3.dot(normal, triangle[0]) > 0);
   }
@@ -41,7 +51,11 @@ test('sphere duplicates the UV seam without opening the surface', () => {
     const a = row * 13;
     const b = a + 12;
     for (let axis = 0; axis < 3; axis++) {
-      assert.ok(Math.abs(sphere.positions[a * 3 + axis] - sphere.positions[b * 3 + axis]) < 1e-6);
+      assert.ok(
+        Math.abs(
+          sphere.positions[a * 3 + axis] - sphere.positions[b * 3 + axis],
+        ) < 1e-6,
+      );
     }
     assert.equal(sphere.uvs[a * 2], 0);
     assert.equal(sphere.uvs[b * 2], 1);
@@ -66,7 +80,9 @@ test('orbit is an indexed unit circle in the XZ plane', () => {
   assert.equal(orbit.indices.length, 100);
   for (let i = 0; i < orbit.positions.length; i += 3) {
     assert.equal(orbit.positions[i + 1], 0);
-    assert.ok(Math.abs(Vec3.length(orbit.positions.subarray(i, i + 3)) - 1) < 1e-6);
+    assert.ok(
+      Math.abs(Vec3.length(orbit.positions.subarray(i, i + 3)) - 1) < 1e-6,
+    );
   }
 });
 

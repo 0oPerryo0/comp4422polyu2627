@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { Mat4, Vec3 } from '../src/math.js';
+// import { Mat4, Vec3 } from '../src/math.js';
+import { Vec3 } from '../src/math/vec3.js';
+import { Mat4 } from '../src/math/mat4.js';
 
 function near(actual, expected, epsilon = 1e-5) {
   assert.equal(actual.length, expected.length);
-  actual.forEach((value, i) => assert.ok(Math.abs(value - expected[i]) < epsilon,
-    `component ${i}: expected ${expected[i]}, got ${value}`));
+  actual.forEach((value, i) =>
+    assert.ok(
+      Math.abs(value - expected[i]) < epsilon,
+      `component ${i}: expected ${expected[i]}, got ${value}`,
+    ),
+  );
 }
 
 test('Vec3 addition, subtraction, scaling and dot product', () => {
@@ -36,9 +42,15 @@ test('identity and translation distinguish points from directions', () => {
 });
 
 test('translation × scale applies scale before translation', () => {
-  const model = Mat4.multiply(Mat4.translation(10, 20, 30), Mat4.scaling(2, 3, 4));
+  const model = Mat4.multiply(
+    Mat4.translation(10, 20, 30),
+    Mat4.scaling(2, 3, 4),
+  );
   near(Mat4.transform(model, [1, 1, 1]), [12, 23, 34, 1]);
-  const reversed = Mat4.multiply(Mat4.scaling(2, 3, 4), Mat4.translation(10, 20, 30));
+  const reversed = Mat4.multiply(
+    Mat4.scaling(2, 3, 4),
+    Mat4.translation(10, 20, 30),
+  );
   near(Mat4.transform(reversed, [1, 1, 1]), [22, 63, 124, 1]);
 });
 
@@ -64,7 +76,10 @@ test('lookAt maps the eye to origin and target onto negative Z', () => {
 
 test('lookAt rejects degenerate camera directions', () => {
   assert.throws(() => Mat4.lookAt([0, 0, 0], [0, 0, 0]), /zero-length/);
-  assert.throws(() => Mat4.lookAt([0, 1, 0], [0, 0, 0], [0, 1, 0]), /zero-length/);
+  assert.throws(
+    () => Mat4.lookAt([0, 1, 0], [0, 0, 0], [0, 1, 0]),
+    /zero-length/,
+  );
 });
 
 test('perspective maps near and far planes to NDC -1 and +1', () => {
@@ -78,7 +93,13 @@ test('perspective maps near and far planes to NDC -1 and +1', () => {
 });
 
 test('perspective rejects invalid frustums', () => {
-  for (const args of [[0, 1, 0.1, 100], [Math.PI, 1, 0.1, 100], [1, 0, 0.1, 100], [1, 1, 0, 100], [1, 1, 10, 1]]) {
+  for (const args of [
+    [0, 1, 0.1, 100],
+    [Math.PI, 1, 0.1, 100],
+    [1, 0, 0.1, 100],
+    [1, 1, 0, 100],
+    [1, 1, 10, 1],
+  ]) {
     assert.throws(() => Mat4.perspective(...args), /frustum/);
   }
 });

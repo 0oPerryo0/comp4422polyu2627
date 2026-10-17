@@ -1,45 +1,12 @@
-export const Vec3 = {
-  create(x = 0, y = 0, z = 0) {
-    return new Float32Array([x, y, z]);
-  },
-  add(a, b) {
-    return Vec3.create(a[0] + b[0], a[1] + b[1], a[2] + b[2]);
-  },
-  subtract(a, b) {
-    return Vec3.create(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-  },
-  scale(v, amount) {
-    return Vec3.create(v[0] * amount, v[1] * amount, v[2] * amount);
-  },
-  dot(a, b) {
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  },
-  cross(a, b) {
-    return Vec3.create(
-      a[1] * b[2] - a[2] * b[1],
-      a[2] * b[0] - a[0] * b[2],
-      a[0] * b[1] - a[1] * b[0],
-    );
-  },
-  length(v) {
-    return Math.hypot(v[0], v[1], v[2]);
-  },
-  normalize(v) {
-    const length = Vec3.length(v);
-    if (length < 1e-8) throw new Error('Cannot normalize a zero-length vector.');
-    return Vec3.scale(v, 1 / length);
-  },
-};
+import { Vec3 } from './vec3.js';
 
 export const Mat4 = {
+  // column major order
   identity() {
-    return new Float32Array([
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1,
-    ]);
+    return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   },
+
+  // multiply two matrices
   multiply(a, b) {
     const result = new Float32Array(16);
     for (let column = 0; column < 4; column++) {
@@ -51,6 +18,8 @@ export const Mat4 = {
     }
     return result;
   },
+
+  // returns the translated result
   translation(x, y, z) {
     const result = Mat4.identity();
     result[12] = x;
@@ -58,6 +27,8 @@ export const Mat4 = {
     result[14] = z;
     return result;
   },
+
+  // returns the scaled result
   scaling(x, y = x, z = x) {
     const result = Mat4.identity();
     result[0] = x;
@@ -65,60 +36,89 @@ export const Mat4 = {
     result[10] = z;
     return result;
   },
+
+  // returns the rotated result (rotates on the x-axis)
   rotationX(angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
-    return new Float32Array([
-      1, 0, 0, 0,
-      0, c, s, 0,
-      0, -s, c, 0,
-      0, 0, 0, 1,
-    ]);
+    return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]);
   },
+
+  // returns the rotated result (rotates on the y-axis)
   rotationY(angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
-    return new Float32Array([
-      c, 0, -s, 0,
-      0, 1, 0, 0,
-      s, 0, c, 0,
-      0, 0, 0, 1,
-    ]);
+    return new Float32Array([c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]);
   },
+
+  // returns the rotated result (rotates on the z-axis)
   rotationZ(angle) {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
-    return new Float32Array([
-      c, s, 0, 0,
-      -s, c, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1,
-    ]);
+    return new Float32Array([c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   },
+
+  // creates projection for the camera
   perspective(fieldOfView, aspect, near, far) {
-    if (!(fieldOfView > 0 && fieldOfView < Math.PI && aspect > 0 && near > 0 && far > near)) {
+    if (
+      !(
+        fieldOfView > 0 &&
+        fieldOfView < Math.PI &&
+        aspect > 0 &&
+        near > 0 &&
+        far > near
+      )
+    ) {
       throw new Error('Invalid perspective frustum.');
     }
     const f = 1 / Math.tan(fieldOfView / 2);
     const range = 1 / (near - far);
     return new Float32Array([
-      f / aspect, 0, 0, 0,
-      0, f, 0, 0,
-      0, 0, (far + near) * range, -1,
-      0, 0, 2 * far * near * range, 0,
+      f / aspect,
+      0,
+      0,
+      0,
+      0,
+      f,
+      0,
+      0,
+      0,
+      0,
+      (far + near) * range,
+      -1,
+      0,
+      0,
+      2 * far * near * range,
+      0,
     ]);
   },
+
+  // positions the camera
   lookAt(eye, target, up = Vec3.create(0, 1, 0)) {
     const backward = Vec3.normalize(Vec3.subtract(eye, target));
     const right = Vec3.normalize(Vec3.cross(up, backward));
     const cameraUp = Vec3.cross(backward, right);
     return new Float32Array([
-      right[0], cameraUp[0], backward[0], 0,
-      right[1], cameraUp[1], backward[1], 0,
-      right[2], cameraUp[2], backward[2], 0,
-      -Vec3.dot(right, eye), -Vec3.dot(cameraUp, eye), -Vec3.dot(backward, eye), 1,
+      right[0],
+      cameraUp[0],
+      backward[0],
+      0,
+      right[1],
+      cameraUp[1],
+      backward[1],
+      0,
+      right[2],
+      cameraUp[2],
+      backward[2],
+      0,
+      -Vec3.dot(right, eye),
+      -Vec3.dot(cameraUp, eye),
+      -Vec3.dot(backward, eye),
+      1,
     ]);
   },
+
+  // apply transformation to point v
   transform(m, v, w = 1) {
     return new Float32Array([
       m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12] * w,
