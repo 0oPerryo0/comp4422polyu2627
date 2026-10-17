@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { OrbitCamera } from '../src/core/camera.js';
+import { OrbitCamera } from '../src/scene/camera.js';
 // import { Mat4, Vec3 } from '../src/math.js';
 import { Vec3 } from '../src/math/vec3.js';
 import { Mat4 } from '../src/math/mat4.js';
-import { createSolarSystem } from '../src/solar-system.js';
+import { createSolarSystem } from '../src/scene/solar-system.js';
 
 function cameraWithoutDOM() {
   const camera = Object.create(OrbitCamera.prototype);

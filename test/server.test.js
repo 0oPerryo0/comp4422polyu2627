@@ -20,7 +20,7 @@ test('server provides HTML and JavaScript with correct MIME types', async () => 
   assert.match(index.headers.get('content-type'), /text\/html/);
   assert.match(await index.text(), /id="scene"/);
   // const script = await fetch(`${base}/src/math.js`);
-  const script = await fetch(`${base}/src/math/vec3.js`);
+  const script = await fetch(`${base}/src/math/mat4.js`);
   assert.match(script.headers.get('content-type'), /javascript/);
   assert.match(await script.text(), /export const Mat4/);
 });

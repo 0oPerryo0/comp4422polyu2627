@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
-import { parseOBJ } from '../src/obj-parser.js';
+import { parseOBJ } from '../src/loaders/obj-parser.js';
 // import { Vec3 } from '../src/math.js';
 import { Vec3 } from '../src/math/vec3.js';
 
