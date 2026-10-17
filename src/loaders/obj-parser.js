@@ -1,4 +1,4 @@
-import { meshData } from './geometry.js';
+import { meshData } from '../geometry/mesh-data.js';
 
 const groupColors = {
   hull: [0.77, 0.84, 0.9],
@@ -7,6 +7,10 @@ const groupColors = {
   panels: [0.16, 0.3, 0.59],
   engine: [0.94, 0.57, 0.26],
 };
+
+/*
+    Parses the data in the .obj file (used for the spacecraft)
+*/
 
 export function parseOBJ(text) {
   const sourcePositions = [];
@@ -22,7 +26,8 @@ export function parseOBJ(text) {
   let faceCount = 0;
 
   const resolveIndex = (token, source, label, line) => {
-    if (!/^-?\d+$/.test(token)) throw new Error(`OBJ line ${line}: invalid ${label} index.`);
+    if (!/^-?\d+$/.test(token))
+      throw new Error(`OBJ line ${line}: invalid ${label} index.`);
     const value = Number(token);
     const index = value > 0 ? value - 1 : source.length + value;
     if (value === 0 || index < 0 || index >= source.length) {
@@ -42,18 +47,34 @@ export function parseOBJ(text) {
       if (components.length !== count || !components.every(Number.isFinite)) {
         throw new Error(`OBJ line ${line}: invalid ${command} coordinates.`);
       }
-      const source = command === 'v' ? sourcePositions : command === 'vt' ? sourceUVs : sourceNormals;
+      const source =
+        command === 'v'
+          ? sourcePositions
+          : command === 'vt'
+            ? sourceUVs
+            : sourceNormals;
       source.push(components);
     } else if (command === 'g') {
       group = values[0] ?? 'hull';
     } else if (command === 'f') {
-      if (values.length < 3) throw new Error(`OBJ line ${line}: a face needs at least 3 vertices.`);
-      const face = values.map(reference => {
+      if (values.length < 3)
+        throw new Error(`OBJ line ${line}: a face needs at least 3 vertices.`);
+      const face = values.map((reference) => {
         const parts = reference.split('/');
-        if (parts.length > 3) throw new Error(`OBJ line ${line}: invalid face reference.`);
-        const position = resolveIndex(parts[0], sourcePositions, 'position', line);
-        const uv = parts[1] ? resolveIndex(parts[1], sourceUVs, 'UV', line) : -1;
-        const normal = parts[2] ? resolveIndex(parts[2], sourceNormals, 'normal', line) : -1;
+        if (parts.length > 3)
+          throw new Error(`OBJ line ${line}: invalid face reference.`);
+        const position = resolveIndex(
+          parts[0],
+          sourcePositions,
+          'position',
+          line,
+        );
+        const uv = parts[1]
+          ? resolveIndex(parts[1], sourceUVs, 'UV', line)
+          : -1;
+        const normal = parts[2]
+          ? resolveIndex(parts[2], sourceNormals, 'normal', line)
+          : -1;
         const key = `${position}/${uv}/${normal}/${group}`;
         if (!vertices.has(key)) {
           vertices.set(key, positions.length / 3);
@@ -64,7 +85,8 @@ export function parseOBJ(text) {
         }
         return vertices.get(key);
       });
-      for (let i = 1; i < face.length - 1; i++) indices.push(face[0], face[i], face[i + 1]);
+      for (let i = 1; i < face.length - 1; i++)
+        indices.push(face[0], face[i], face[i + 1]);
       faceCount++;
     }
   }
@@ -73,10 +95,4 @@ export function parseOBJ(text) {
   result.sourceVertexCount = sourcePositions.length;
   result.faceCount = faceCount;
   return result;
-}
-
-export async function loadOBJ(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Could not load OBJ (${response.status}): ${url}`);
-  return parseOBJ(await response.text());
 }

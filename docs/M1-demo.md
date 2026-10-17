@@ -8,7 +8,7 @@ M1 is listed for **19 October 2026** in the supplied brief. The milestone owner 
 2. Run `npm start`; open http://127.0.0.1:4173.
 3. Check that the header says **WebGL2 ready**.
 4. Inspect Earth and Surveyor, then reset to the overview.
-5. Keep the code editor open at `src/math.js`, `src/mesh.js`, `src/obj-loader.js`, and `shaders/scene.vert`.
+5. Keep the code editor open at `src/math/mat4.js`, `src/core/mesh.js`, `src/loaders/obj-parser.js`, and `shaders/scene.vert`.
 6. Ensure browser zoom is 100%, there are no console errors, and text is readable in the recording.
 
 ## Suggested three-minute structure
@@ -17,8 +17,8 @@ M1 is listed for **19 October 2026** in the supplied brief. The milestone owner 
 |---|---|---|
 | 0:00–0:20 | Whole-system view | Project theme; M1 is geometry and camera, with static objects |
 | 0:20–0:45 | Drag, scroll, Shift-drag; focus Earth; reset | Eye/target, orbit, pan, zoom limits and perspective |
-| 0:45–1:20 | `src/math.js` and `shaders/scene.vert` | Own column-major matrices; scale then translation; `P × V × M × position`; view versus projection |
-| 1:20–1:45 | `src/geometry.js` and `src/mesh.js` | Shared sphere vertex/index buffers; VAO state; `drawElements` |
+| 0:45–1:20 | `src/math/mat4.js` and `shaders/scene.vert` | Own column-major matrices; scale then translation; `P × V × M × position`; view versus projection |
+| 1:20–1:45 | `src/geometry/create-sphere.js` and `src/core/mesh.js` | Shared sphere vertex/index buffers; VAO state; `drawElements` |
 | 1:45–2:15 | Inspect Surveyor; show OBJ asset and loader | Asset fetched at runtime; quads triangulated; complete vertices deduplicated into one WebGL index |
 | 2:15–2:40 | Orbit a close-up; show depth setup in `src/main.js` | Depth buffer distinguishes near/far surfaces; clear depth every frame; back-face culling is separate |
 | 2:40–3:00 | Tests and final scene | Summarize M1 coverage and personal contribution; distinguish later textures/animation/lighting |
