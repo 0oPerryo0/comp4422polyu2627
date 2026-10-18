@@ -6,20 +6,22 @@ import { compile } from './compile-shader.js';
 */
 
 export async function createProgram(gl, vertexURL, fragmentURL) {
-  const sources = await Promise.all([
+  const [vertexSource, fragmentSource] = await Promise.all([
     readShader(vertexURL),
     readShader(fragmentURL),
   ]);
 
   const program = gl.createProgram();
-  const shaders = [];
+  let vertexShader;
+  let fragmentShader;
 
   // if anything fails, delete the program; the shaders are always deleted
   try {
-    shaders.push(compile(gl, gl.VERTEX_SHADER, sources[0]));
-    shaders.push(compile(gl, gl.FRAGMENT_SHADER, sources[1]));
+    vertexShader = compile(gl, gl.VERTEX_SHADER, vertexSource);
+    fragmentShader = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
 
-    for (const shader of shaders) gl.attachShader(program, shader);
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
 
     // read the log before the program is deleted in the catch block
@@ -32,6 +34,7 @@ export async function createProgram(gl, vertexURL, fragmentURL) {
     gl.deleteProgram(program);
     throw error;
   } finally {
-    for (const shader of shaders) gl.deleteShader(shader);
+    if (vertexShader) gl.deleteShader(vertexShader);
+    if (fragmentShader) gl.deleteShader(fragmentShader);
   }
 }
