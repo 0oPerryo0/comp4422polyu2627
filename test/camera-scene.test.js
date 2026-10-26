@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { OrbitCamera } from '../src/scene/camera.js';
-// import { Mat4, Vec3 } from '../src/math.js';
-import { Vec3 } from '../src/math/vec3.js';
-import { Mat4 } from '../src/math/mat4.js';
-import { createSolarSystem } from '../src/scene/solar-system.js';
+import { Vec3, Mat4 } from '../src/math/index.js';
+import { createSolarSystem, OrbitCamera } from '../src/scene/index.js';
+import { ObjectKind } from '../src/consts/index.js';
 
 function cameraWithoutDOM() {
   const camera = Object.create(OrbitCamera.prototype);
@@ -75,7 +73,10 @@ test('portrait projection preserves horizontal framing', () => {
 test('scene has eight planets, the Moon, and a loaded OBJ instance', () => {
   const bodies = createSolarSystem();
   assert.equal(bodies.length, 11);
-  assert.equal(bodies.filter((body) => body.kind === 'PLANET').length, 8);
+  assert.equal(
+    bodies.filter((body) => body.kind === ObjectKind.PLANET).length,
+    8,
+  );
   assert.equal(
     bodies.find((body) => body.id === 'surveyor').mesh,
     'spacecraft',
