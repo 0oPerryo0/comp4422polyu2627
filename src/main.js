@@ -2,7 +2,11 @@ import { Mat4, Vec3 } from './math/index.js';
 import { createSphere, createOrbit, createStars } from './geometry/index.js';
 import { loadOBJ } from './loaders/obj-loader.js';
 import { Mesh, createProgram } from './core/index.js';
-import { OrbitCamera, createSolarSystem } from './scene/index.js';
+import {
+  OrbitCamera,
+  createSolarSystem,
+  updateSolarSystem,
+} from './scene/index.js';
 
 const canvas = document.querySelector('#scene');
 const status = document.querySelector('#renderer-status');
@@ -222,6 +226,8 @@ async function start() {
         : Math.min((time - previousTime) / 1000, 0.05);
     previousTime = time;
     camera.update(deltaTime);
+    updateSolarSystem(bodies, time);
+
     resize();
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);
@@ -240,7 +246,7 @@ async function start() {
     draw(stars, Mat4.translation(...camera.eye), [1, 1, 1]);
     gl.depthMask(true);
     for (const body of bodies) {
-      if (body.orbitRadius)
+      if (body.orbitRadius && body.id != 'surveyor')
         draw(orbit, Mat4.scaling(body.orbitRadius), [0.15, 0.21, 0.3]);
     }
     for (const body of bodies)
