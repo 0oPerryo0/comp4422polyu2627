@@ -4,7 +4,7 @@
 
 export const PlanetDefinitions = [
   // [id, name, radius, orbitRadius, initialAngle, tint, speed]
-  ['mercury', 'Mercury', 0.32, 4.4, 2.8, [0.65, 0.61, 0.56], , 1.2],
+  ['mercury', 'Mercury', 0.32, 4.4, 2.8, [0.65, 0.61, 0.56], 1.2],
   ['venus', 'Venus', 0.54, 6.6, 1.1, [0.92, 0.74, 0.43], 0.9],
   ['earth', 'Earth', 0.68, 9.2, 0.35, [0.3, 0.65, 0.94], 0.7],
   ['mars', 'Mars', 0.46, 12.1, -1.2, [0.88, 0.38, 0.23], 0.55],

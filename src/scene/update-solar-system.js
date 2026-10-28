@@ -11,6 +11,8 @@ export function updateSolarSystem(bodies, time) {
   const earth = bodies.find((body) => body.id === 'earth');
 
   for (const body of bodies) {
+    if (body.id == 'sun') continue;
+
     const angle = body.angle + t * body.speed;
 
     body.position[0] = body.orbitRadius * Math.sin(angle);
