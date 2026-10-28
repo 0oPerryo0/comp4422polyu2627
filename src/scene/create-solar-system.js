@@ -22,7 +22,17 @@ export function createSolarSystem(gl) {
     },
   ];
 
-  for (const [id, name, radius, orbitRadius, angle, tint, speed, texture] of PlanetDefinitions) {
+  for (const [
+    id,
+    name,
+    radius,
+    orbitRadius,
+    angle,
+    tint,
+    speed,
+    selfSpeed,
+    texture,
+  ] of PlanetDefinitions) {
     bodies.push({
       id,
       name,
@@ -31,6 +41,7 @@ export function createSolarSystem(gl) {
       orbitRadius,
       tint,
       speed,
+      selfSpeed,
       angle,
       texture: loadTexture(gl, texture),
       position: Vec3.create(orbitRadius * Math.cos(angle), 0, orbitRadius * Math.sin(angle)),
@@ -47,6 +58,7 @@ export function createSolarSystem(gl) {
     radius: MoonData.RADIUS,
     orbitRadius: MoonData.ORBIT_RADIUS,
     speed: MoonData.SPEED,
+    selfSpeed: MoonData.SELF_SPEED,
     angle: 0,
     position: Vec3.add(earth.position, Vec3.create(MoonData.ORBIT_RADIUS, 0, 0)),
     tint: MoonData.TINT,
