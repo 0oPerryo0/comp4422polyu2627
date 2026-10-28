@@ -2,11 +2,7 @@ import { Mat4, Vec3 } from './math/index.js';
 import { createSphere, createOrbit, createStars } from './geometry/index.js';
 import { loadOBJ } from './loaders/obj-loader.js';
 import { Mesh, createProgram } from './core/index.js';
-import {
-  OrbitCamera,
-  createSolarSystem,
-  updateSolarSystem,
-} from './scene/index.js';
+import { OrbitCamera, createSolarSystem, updateSolarSystem } from './scene/index.js';
 
 const canvas = document.querySelector('#scene');
 const status = document.querySelector('#renderer-status');
@@ -19,11 +15,9 @@ function showError(error) {
   document.querySelector('#error-panel').hidden = false;
   document.querySelector('#error-message').textContent = error.message;
   status.textContent = 'Renderer unavailable';
-  document
-    .querySelectorAll('.sidebar button, .sidebar select')
-    .forEach((control) => {
-      control.disabled = true;
-    });
+  document.querySelectorAll('.sidebar button, .sidebar select').forEach((control) => {
+    control.disabled = true;
+  });
 
   console.error(error);
 }
@@ -35,9 +29,7 @@ async function start() {
     event.preventDefault();
     contextLost = true;
     showError(
-      new Error(
-        'The graphics context was lost. Reload the page to rebuild GPU resources.',
-      ),
+      new Error('The graphics context was lost. Reload the page to rebuild GPU resources.'),
     );
   });
 
@@ -50,9 +42,9 @@ async function start() {
   const orbit = new Mesh(gl, createOrbit(), gl.LINE_LOOP);
   const stars = new Mesh(gl, createStars(), gl.POINTS);
   const camera = new OrbitCamera(canvas);
-  const bodies = createSolarSystem();
+  const bodies = createSolarSystem(gl);
   const uniforms = Object.fromEntries(
-    ['Model', 'View', 'Projection', 'Tint', 'PointSize'].map((name) => [
+    ['Model', 'View', 'Projection', 'Tint', 'PointSize', 'Texture', 'UseTexture'].map((name) => [
       name,
       gl.getUniformLocation(program, `u${name}`),
     ]),
@@ -89,10 +81,8 @@ async function start() {
     if (body) camera.focus(body.position, body.radius);
     else camera.reset();
     focusSelect.value = selected;
-    document.querySelector('#selection-kind').textContent =
-      body?.kind ?? 'OVERVIEW';
-    document.querySelector('#selection-name').textContent =
-      body?.name ?? 'The solar system';
+    document.querySelector('#selection-kind').textContent = body?.kind ?? 'OVERVIEW';
+    document.querySelector('#selection-name').textContent = body?.name ?? 'The solar system';
     document.querySelector('#selection-description').textContent =
       body?.description ??
       'Drag to discover the scene. Choose a destination to inspect the geometry up close.';
@@ -103,20 +93,12 @@ async function start() {
       label.setAttribute('aria-pressed', String(labelId === selected));
   }
   focusSelect.addEventListener('change', () => focus(focusSelect.value));
-  document
-    .querySelector('#earth-button')
-    .addEventListener('click', () => focus('earth'));
-  document
-    .querySelector('#ship-button')
-    .addEventListener('click', () => focus('surveyor'));
-  document
-    .querySelector('#reset-button')
-    .addEventListener('click', () => focus('overview'));
-  document
-    .querySelectorAll('.sidebar button, .sidebar select')
-    .forEach((control) => {
-      control.disabled = false;
-    });
+  document.querySelector('#earth-button').addEventListener('click', () => focus('earth'));
+  document.querySelector('#ship-button').addEventListener('click', () => focus('surveyor'));
+  document.querySelector('#reset-button').addEventListener('click', () => focus('overview'));
+  document.querySelectorAll('.sidebar button, .sidebar select').forEach((control) => {
+    control.disabled = false;
+  });
 
   function resize() {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -129,9 +111,19 @@ async function start() {
     gl.viewport(0, 0, width, height);
   }
 
-  function draw(mesh, model, tint) {
+  function draw(mesh, model, tint, texture = null) {
     gl.uniformMatrix4fv(uniforms.Model, false, model);
     gl.uniform3fv(uniforms.Tint, tint);
+
+    if (texture !== null) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.uniform1i(uniforms.Texture, 0);
+      gl.uniform1i(uniforms.UseTexture, 1);
+    } else {
+      gl.uniform1i(uniforms.UseTexture, 0);
+    }
+
     mesh.draw();
     drawCalls++;
   }
@@ -145,10 +137,7 @@ async function start() {
     );
     for (const body of ordered) {
       const label = labels.get(body.id);
-      const anchor = Vec3.add(
-        body.position,
-        Vec3.create(0, body.radius + 0.35, 0),
-      );
+      const anchor = Vec3.add(body.position, Vec3.create(0, body.radius + 0.35, 0));
       const clip = Mat4.transform(viewProjection, anchor);
       const x = ((clip[0] / clip[3]) * 0.5 + 0.5) * width;
       let y = ((-clip[1] / clip[3]) * 0.5 + 0.5) * height;
@@ -157,9 +146,7 @@ async function start() {
       let overlaps = false;
       for (let attempt = 0; attempt < 4; attempt++) {
         overlaps = occupied.some(
-          (box) =>
-            Math.abs(x - box.x) < halfWidth + box.halfWidth + 4 &&
-            Math.abs(y - box.y) < 23,
+          (box) => Math.abs(x - box.x) < halfWidth + box.halfWidth + 4 && Math.abs(y - box.y) < 23,
         );
         if (!overlaps) break;
         y -= 23;
@@ -220,10 +207,7 @@ async function start() {
   let previousTime;
   function render(time) {
     if (contextLost) return;
-    const deltaTime =
-      previousTime === undefined
-        ? 0
-        : Math.min((time - previousTime) / 1000, 0.05);
+    const deltaTime = previousTime === undefined ? 0 : Math.min((time - previousTime) / 1000, 0.05);
     previousTime = time;
     camera.update(deltaTime);
     updateSolarSystem(bodies, time);
@@ -235,22 +219,28 @@ async function start() {
     const projection = camera.projection(canvas.width / canvas.height);
     gl.uniformMatrix4fv(uniforms.View, false, view);
     gl.uniformMatrix4fv(uniforms.Projection, false, projection);
-    gl.uniform1f(
-      uniforms.PointSize,
-      Math.min(window.devicePixelRatio || 1, 2) * 1.5,
-    );
+    gl.uniform1f(uniforms.PointSize, Math.min(window.devicePixelRatio || 1, 2) * 1.5);
     drawCalls = 0;
 
     // Camera-centered stars form a background and never write to the depth buffer.
     gl.depthMask(false);
     draw(stars, Mat4.translation(...camera.eye), [1, 1, 1]);
     gl.depthMask(true);
+
     for (const body of bodies) {
       if (body.orbitRadius && body.id != 'surveyor')
         draw(orbit, Mat4.scaling(body.orbitRadius), [0.15, 0.21, 0.3]);
     }
-    for (const body of bodies)
-      draw(body.mesh ? spacecraft : sphere, body.model, body.tint);
+
+    for (const body of bodies) {
+      draw(
+        body.mesh ? spacecraft : sphere,
+        body.model,
+        body.tint,
+        body.id == 'surveyor' ? null : body.texture,
+      );
+    }
+
     gl.bindVertexArray(null);
     updateLabels(Mat4.multiply(projection, view));
     frameCount++;
