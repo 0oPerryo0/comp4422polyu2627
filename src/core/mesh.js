@@ -17,6 +17,7 @@ export class Mesh {
 
     this.attribute(0, data.positions);
     this.attribute(1, data.colors);
+    this.attribute(2, data.uvs);
 
     const indexBuffer = gl.createBuffer();
     this.buffers.push(indexBuffer);
@@ -37,6 +38,9 @@ export class Mesh {
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.enableVertexAttribArray(location);
     gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
+
+    const size = location === 2 ? 2 : 3;
+    gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
   }
 
   // draw the 3D shape

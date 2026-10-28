@@ -12,7 +12,6 @@ export function updateSolarSystem(bodies, time) {
 
   for (const body of bodies) {
     if (body.id == 'sun') continue;
-
     const angle = body.angle + t * body.speed;
 
     body.position[0] = body.orbitRadius * Math.sin(angle);
@@ -23,14 +22,13 @@ export function updateSolarSystem(bodies, time) {
       body.position[2] += earth.position[2];
     }
 
-    // Recompute model matrix for this frame
     const translation = Mat4.translation(...body.position);
+    const selfSpinAngle = t * (body.selfSpeed || 1.0);
+    const rotation = Mat4.rotationY(selfSpinAngle);
+
     body.model =
       body.mesh === 'spacecraft'
-        ? Mat4.multiply(
-            translation,
-            Mat4.multiply(Mat4.rotationY(-0.65), Mat4.scaling(0.7)),
-          )
-        : Mat4.multiply(translation, Mat4.scaling(body.radius));
+        ? Mat4.multiply(translation, Mat4.multiply(Mat4.rotationY(-0.65), Mat4.scaling(0.7)))
+        : Mat4.multiply(translation, Mat4.multiply(rotation, Mat4.scaling(body.radius)));
   }
 }

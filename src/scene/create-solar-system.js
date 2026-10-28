@@ -1,10 +1,6 @@
-import {
-  ObjectKind,
-  PlanetDefinitions,
-  MoonData,
-  SpacecraftData,
-} from '../consts/index.js';
+import { ObjectKind, PlanetDefinitions, MoonData, SpacecraftData } from '../consts/index.js';
 import { Vec3, Mat4 } from '../math/index.js';
+import { loadTexture } from '../loaders/texture-loader.js';
 
 /*
   Create and return the data for all the bodies in the solar system
@@ -12,7 +8,7 @@ import { Vec3, Mat4 } from '../math/index.js';
   including: planets, spacecraft, moon, sun, and stars.
 */
 
-export function createSolarSystem() {
+export function createSolarSystem(gl) {
   const bodies = [
     {
       id: 'sun',
@@ -21,6 +17,7 @@ export function createSolarSystem() {
       radius: 2.2,
       position: Vec3.create(),
       tint: [1, 0.72, 0.3],
+      texture: loadTexture(gl, './assets/sun.jpg'),
       description: 'The center of our scene.',
     },
   ];
@@ -33,6 +30,8 @@ export function createSolarSystem() {
     angle,
     tint,
     speed,
+    selfSpeed,
+    texture,
   ] of PlanetDefinitions) {
     bodies.push({
       id,
@@ -42,19 +41,16 @@ export function createSolarSystem() {
       orbitRadius,
       tint,
       speed,
+      selfSpeed,
       angle,
-      position: Vec3.create(
-        orbitRadius * Math.cos(angle),
-        0,
-        orbitRadius * Math.sin(angle),
-      ),
+      texture: loadTexture(gl, texture),
+      position: Vec3.create(orbitRadius * Math.cos(angle), 0, orbitRadius * Math.sin(angle)),
       description: 'An instance of the shared indexed sphere mesh.',
     });
   }
 
   const earth = bodies.find((body) => body.id === 'earth');
 
-  // add the moon, relative to the earth's location
   bodies.push({
     id: 'moon',
     name: 'Moon',
@@ -62,12 +58,11 @@ export function createSolarSystem() {
     radius: MoonData.RADIUS,
     orbitRadius: MoonData.ORBIT_RADIUS,
     speed: MoonData.SPEED,
+    selfSpeed: MoonData.SELF_SPEED,
     angle: 0,
-    position: Vec3.add(
-      earth.position,
-      Vec3.create(MoonData.ORBIT_RADIUS, 0, 0),
-    ),
+    position: Vec3.add(earth.position, Vec3.create(MoonData.ORBIT_RADIUS, 0, 0)),
     tint: MoonData.TINT,
+    texture: loadTexture(gl, MoonData.TEXTURE_URL),
     description: 'A separate sphere orbiting Earth.',
   });
 
@@ -89,10 +84,7 @@ export function createSolarSystem() {
     const translation = Mat4.translation(...body.position);
     body.model =
       body.mesh === 'spacecraft'
-        ? Mat4.multiply(
-            translation,
-            Mat4.multiply(Mat4.rotationY(-0.65), Mat4.scaling(0.7)),
-          )
+        ? Mat4.multiply(translation, Mat4.multiply(Mat4.rotationY(-0.65), Mat4.scaling(0.7)))
         : Mat4.multiply(translation, Mat4.scaling(body.radius));
   }
 
