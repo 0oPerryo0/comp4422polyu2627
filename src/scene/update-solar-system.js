@@ -1,34 +1,35 @@
 import { Mat4 } from '../math/index.js';
 
-/*
-  Create and update transformations about objects posiitons overtime
+export function updateSolarSystem(scene, time) {
+  const { root, bodies } = scene;
+  const t = time / 1000;
 
-  including: planets, moon, and spacecraft.
-*/
+  root.traverse((node) => {
+    const body = node.body;
+    if (!body) return;
 
-export function updateSolarSystem(bodies, time) {
-  const t = time * 0.001;
-  const earth = bodies.find((body) => body.id === 'earth');
+    const type = node.userData?.type;
 
-  for (const body of bodies) {
-    if (body.id == 'sun') continue;
-    const angle = body.angle + t * body.speed;
-
-    body.position[0] = body.orbitRadius * Math.sin(angle);
-    body.position[2] = body.orbitRadius * Math.cos(angle);
-
-    if (body.id === 'moon') {
-      body.position[0] += earth.position[0];
-      body.position[2] += earth.position[2];
+    if (type === 'planet-pivot' || type === 'moon-pivot' || type === 'surveyor-pivot') {
+      const angle = (body.angle ?? 0) + t * (body.speed ?? 0);
+      node.localMatrix = Mat4.rotationY(angle);
+    } else if (node.name.endsWith('-body') && node.baseLocal) {
+      const spin = Mat4.rotationY(t * (body.selfSpeed ?? 0));
+      node.localMatrix = Mat4.multiply(node.baseLocal, spin);
     }
+  });
 
-    const translation = Mat4.translation(...body.position);
-    const selfSpinAngle = t * (body.selfSpeed || 1.0);
-    const rotation = Mat4.rotationY(selfSpinAngle);
+  root.updateWorldMatrix();
 
-    body.model =
-      body.mesh === 'spacecraft'
-        ? Mat4.multiply(translation, Mat4.multiply(Mat4.rotationY(-0.65), Mat4.scaling(0.7)))
-        : Mat4.multiply(translation, Mat4.multiply(rotation, Mat4.scaling(body.radius)));
-  }
+  root.traverse((node) => {
+    if (node.body && (node.name === 'sun' || node.name.endsWith('-body'))) {
+      node.body.position = [
+        node.worldMatrix[12],
+        node.worldMatrix[13],
+        node.worldMatrix[14],
+      ];
+    }
+  });
+
+  void bodies;
 }
