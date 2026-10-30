@@ -20,7 +20,9 @@ out vec3 vWorldPosition;
 void main() {
     vec4 worldPos = uModel * vec4(aPosition, 1.0);
     vWorldPosition = worldPos.xyz;
-    vNormal = normalize(mat3(uNormalMatrix) * aNormal);
+
+    vec3 worldNormal = mat3(uNormalMatrix) * aNormal;
+    vNormal = length(worldNormal) > 0.001 ? normalize(worldNormal) : vec3(0.0);
 
     gl_Position = uProjection * uView * worldPos;
     gl_PointSize = uPointSize;

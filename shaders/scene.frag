@@ -13,10 +13,16 @@ uniform int uUseTexture;
 uniform vec3 uLightPos;
 uniform vec3 uCameraPos;
 uniform int uIsSun;
-uniform int uOpticalType;   // 0=reflective 1=transmissive 2=absorbing 3=diffractive
+uniform int uOpticalType;
 uniform float uTime;
+uniform float uSunPower;
 
 out vec4 outColor;
+
+vec3 filmicContrast(vec3 x) {
+    vec3 y = x / (x + vec3(0.9));
+    return mix(y, x, 0.25);
+}
 
 void main() {
     vec3 baseColor;
@@ -31,6 +37,14 @@ void main() {
         baseColor = vColor * uTint;
     }
 
+    // ---- Guard: fragments without a real normal (stars, orbit lines) ----
+    // Skip lighting entirely and output the base color. Prevents NaN
+    // propagation from normalize(vec3(0.0)) through all the dot products.
+    if (length(vNormal) < 0.001) {
+        outColor = vec4(baseColor, 1.0);
+        return;
+    }
+
     vec3 N = normalize(vNormal);
     vec3 L = normalize(uLightPos - vWorldPosition);
     vec3 V = normalize(uCameraPos - vWorldPosition);
@@ -40,72 +54,76 @@ void main() {
     float NdotH = max(dot(N, H), 0.0);
     float fres  = pow(1.0 - NdotV, 3.0);
 
-    // ================= SUN (emissive, always) =================
+    float edgeDarken = 0.55 + 0.45 * pow(NdotV, 0.4);
+
+    vec3 warmKey = vec3(1.00, 0.92, 0.78);
+    vec3 coolFill = vec3(0.30, 0.42, 0.62);
+
+    vec3 ambient = mix(
+        baseColor * vec3(0.22, 0.17, 0.14),
+        baseColor * coolFill * 0.55,
+        0.5 + 0.5 * N.y
+    );
+
+    // ================= SUN =================
     if (uIsSun == 1) {
         float rim = pow(1.0 - NdotV, 2.0);
         float pulse = 0.5 + 0.5 * sin(uTime * 1.8 + vWorldPosition.x * 3.0);
         vec3 hot  = vec3(1.0, 0.98, 0.85);
         vec3 core = vec3(1.0, 0.72, 0.30);
-        vec3 color = mix(core, hot, rim * pulse);
-        color += vec3(0.6, 0.35, 0.1) * rim;
-        outColor = vec4(color * 1.4, 1.0);
+
+        vec3 dimHot  = vec3(0.55, 0.42, 0.28);
+        vec3 dimCore = vec3(0.38, 0.20, 0.08);
+
+        vec3 activeHot  = mix(dimHot,  hot,  uSunPower);
+        vec3 activeCore = mix(dimCore, core, uSunPower);
+
+        vec3 color = mix(activeCore, activeHot, rim * pulse);
+        color += vec3(0.5, 0.30, 0.10) * rim * uSunPower;
+        color *= mix(0.45, 1.0, uSunPower);
+
+        float drain = 1.0 - uSunPower;
+        float ember = (0.5 + 0.5 * sin(uTime * 0.8)) * drain;
+        color += vec3(0.35, 0.12, 0.02) * ember * (1.0 - NdotV);
+
+        outColor = vec4(color, 1.0);
         return;
     }
 
-    // ================= OPTICAL CLASSES =================
     vec3 color;
 
     if (uOpticalType == 0) {
-        // ---- REFLECTIVE: sharp specular + metallic rim ----
-        vec3 ambient = 0.08 * baseColor;
-        vec3 diffuse = NdotL * baseColor * vec3(1.02, 0.96, 0.88);
-        float spec = pow(NdotH, 96.0);
-        vec3 specular = vec3(1.0) * spec * 0.9;
-        vec3 rimColor = vec3(0.75, 0.85, 1.0) * fres * 0.35;
-        color = ambient + diffuse + specular + rimColor;
+        vec3 diffuse = NdotL * baseColor * warmKey;
+        float spec = pow(NdotH, 128.0);
+        vec3 specular = vec3(1.0, 0.92, 0.78) * spec * 1.1;
+        vec3 rimColor = coolFill * fres * 0.75;
+        vec3 shadowFill = baseColor * coolFill * 0.20 * (1.0 - NdotL);
+        color = ambient + diffuse + specular + rimColor + shadowFill;
     } else if (uOpticalType == 1) {
-        // ---- TRANSMISSIVE: backlit glow bleeding through ----
         float backlight = max(-dot(N, L), 0.0);
-        vec3 transmission = vec3(0.55, 0.85, 1.0) * backlight * 1.1;
-        vec3 ambient = 0.10 * baseColor;
-        vec3 diffuse = NdotL * baseColor * 0.55;
+        vec3 transmission = vec3(0.5, 0.8, 1.0) * backlight * 0.9;
+        vec3 diffuse = NdotL * baseColor * warmKey * 0.55;
         float spec = pow(NdotH, 48.0);
-        vec3 specular = vec3(0.7, 0.9, 1.0) * spec * 0.55;
-        vec3 edgeGlow = vec3(0.4, 0.7, 1.0) * fres * 0.9;
+        vec3 specular = vec3(0.75, 0.9, 1.0) * spec * 0.5;
+        vec3 edgeGlow = vec3(0.4, 0.7, 1.0) * fres * 0.7;
         color = ambient + diffuse + transmission + specular + edgeGlow;
     } else if (uOpticalType == 2) {
-        // ---- ABSORBING: dark body, faint warm rim on lit silhouette ----
-        vec3 ambient = 0.03 * baseColor;
-        vec3 diffuse = NdotL * baseColor * 0.25;
-
-        vec3 hotRim = vec3(1.0, 0.45, 0.15) * fres * NdotL * 0.6;
-
-        color = ambient + diffuse + hotRim;
+        vec3 diffuse = NdotL * baseColor * warmKey * 0.3;
+        vec3 hotRim = vec3(1.0, 0.45, 0.15) * fres * NdotL * 0.7;
+        color = ambient * 0.5 + diffuse + hotRim;
     } else {
-        // ---- DIFFRACTIVE: thin-film interference (iridescent rim) ----
-        // Physically motivated: rainbow appears at grazing angles (fres),
-        // shades of the rainbow shift with viewing angle, dark side stays dark.
-        vec3 ambient = 0.06 * baseColor;
-        vec3 diffuse = NdotL * baseColor * 0.55;
-
-        // Thin-film band: use view angle. Higher frequency near silhouette
-        // (fres grows as NdotV drops), so the rainbow "concentrates" at edges.
+        vec3 diffuse = NdotL * baseColor * warmKey * 0.55;
         float filmPhase = dot(N, V) * 5.0 + uTime * 0.15;
         vec3 iridescent = 0.5 + 0.5 * cos(6.2831 * (filmPhase + vec3(0.0, 0.33, 0.67)));
-
-        // Rainbow only where the surface is grazing to the camera (fres).
-        // Small NdotL factor so it's *lit* — but edges stay iridescent even in shadow.
         vec3 thinFilm = iridescent * fres * (0.35 + 0.65 * NdotL);
-
-        // Small specular highlight stays light-dependent.
         float spec = pow(NdotH, 96.0);
-        vec3 specular = iridescent * spec * 0.6;
-
-        color = ambient + diffuse + thinFilm * 2.0 + specular;
+        vec3 specular = iridescent * spec * 0.5;
+        color = ambient + diffuse + thinFilm * 1.0 + specular;
     }
 
-    // Universal cool atmosphere rim for readability across classes.
-    color += vec3(0.25, 0.45, 0.85) * pow(1.0 - NdotV, 4.0) * 0.35;
+    color *= edgeDarken;
+    color += coolFill * pow(1.0 - NdotV, 4.0) * 0.35;
+    color = filmicContrast(color);
 
     outColor = vec4(color, 1.0);
 }

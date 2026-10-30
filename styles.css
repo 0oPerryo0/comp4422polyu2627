@@ -651,3 +651,16 @@ canvas:focus-visible {
   margin: 12px 0 0;
   line-height: 1.7;
 }
+
+#reset-light-button {
+  margin-top: 8px;
+  color: #f1cc8c;
+}
+
+#reset-light-button:hover {
+  color: #ffe4ab;
+}
+
+#reset-light-button span {
+  font-size: 15px;
+}

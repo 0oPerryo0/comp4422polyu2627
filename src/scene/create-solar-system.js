@@ -3,20 +3,14 @@ import { Vec3, Mat4 } from '../math/index.js';
 import { loadTexture } from '../loaders/texture-loader.js';
 import { SceneNode } from './scene-node.js';
 
-// Default optical class per planet so the demo shows all four at once.
-//   0 = reflective, 1 = transmissive, 2 = absorbing, 3 = diffractive
 const DEFAULT_OPTICAL = {
-  mercury: 2,   // absorbing — dark rocky body
-  venus: 1,   // transmissive — thick cloudy atmosphere
-  earth: 0,   // reflective — oceans
-  mars: 2,   // absorbing — dusty red surface
-  jupiter: 3,   // diffractive — banded gas giant
-  saturn: 3,   // diffractive — rings
-  uranus: 1,   // transmissive — pale icy giant
-  neptune: 1,   // transmissive — deep blue
-  moon: 0,   // reflective — dusty grey
-  surveyor: 0,  // reflective — metal hull
+  mercury: 2, venus: 1, earth: 0, mars: 2,
+  jupiter: 3, saturn: 3, uranus: 1, neptune: 1,
+  moon: 0, surveyor: 0,
 };
+
+// Planets the surveyor can hop between (excludes the Sun).
+const SURVEYOR_HOSTS = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
 
 export function createSolarSystem(gl) {
   const root = new SceneNode('root');
@@ -34,7 +28,7 @@ export function createSolarSystem(gl) {
     texture: loadTexture(gl, './assets/sun.jpg'),
     description: 'The center of our scene.',
     isSun: true,
-    opticalType: -1,   // Sun is emissive; never affected by optical type
+    opticalType: -1,
   };
   const sunNode = new SceneNode('sun', sunBody);
   sunNode.localMatrix = Mat4.scaling(sunBody.radius);
@@ -112,14 +106,15 @@ export function createSolarSystem(gl) {
     earthBodyNode.add(moonPivot);
   }
 
-  // ---- Surveyor (orbit around Earth) ----
+  // ---- Surveyor (child of ROOT, not Earth; hops between hosts) ----
   {
-    const earth = bodies.find((b) => b.id === 'earth');
     const surveyorBody = {
       id: 'surveyor',
       name: 'Surveyor',
       kind: ObjectKind.LOADED_OBJ,
       radius: SpacecraftData.RADIUS,
+      // Dynamic state, updated each frame by update-solar-system.js:
+      hostId: 'earth',
       orbitRadius: SpacecraftData.ORBIT_RADIUS,
       speed: SpacecraftData.SPEED,
       angle: SpacecraftData.INITIAL_ANGLE,
@@ -127,27 +122,28 @@ export function createSolarSystem(gl) {
       tint: SpacecraftData.TINT,
       mesh: 'spacecraft',
       position: [0, 0, 0],
-      description: 'A low-poly spacecraft following Earth.',
+      description: 'A low-poly spacecraft that hops between planets.',
       isSun: false,
       opticalType: DEFAULT_OPTICAL.surveyor,
+      // How long (in seconds) to stay with each host before moving on.
+      hopEvery: 14,
+      hopTimer: 0,
+      orbitRadiusFactor: 2.6,   // orbit distance = host.radius × this
     };
     bodies.push(surveyorBody);
 
-    const earthBodyNode = planetNodes.get('earth').bodyNode;
-    const surveyorPivot = new SceneNode('surveyor-pivot', surveyorBody);
-    surveyorPivot.userData = { type: 'surveyor-pivot' };
-
+    // The surveyor lives under the ROOT node (not Earth) so it can re-parent freely.
+    // Its position is fully driven by update-solar-system.js each frame, so we
+    // don't need pivot/child structure — just a single body node we mutate.
     const surveyorBodyNode = new SceneNode('surveyor-body', surveyorBody);
-    const scaledOrbit = SpacecraftData.ORBIT_RADIUS / earth.radius;
-    const scaledShip = SpacecraftData.RADIUS / earth.radius;
-    surveyorBodyNode.baseLocal = Mat4.multiply(
-      Mat4.translation(scaledOrbit, 0, 0),
-      Mat4.multiply(Mat4.rotationY(-0.65), Mat4.scaling(scaledShip)),
-    );
+    surveyorBodyNode.baseLocal = Mat4.identity();
     surveyorBodyNode.localMatrix = surveyorBodyNode.baseLocal;
-    surveyorPivot.add(surveyorBodyNode);
-    earthBodyNode.add(surveyorPivot);
+    root.add(surveyorBodyNode);
+
+    // Expose helper data so update-solar-system.js can compute world position.
+    surveyorBody._sceneHelpers = { root };
   }
 
-  return { root, bodies, orbitNodes };
+  // Attach the list of hosts so main.js can show/cycle them if needed.
+  return { root, bodies, orbitNodes, surveyorHosts: SURVEYOR_HOSTS };
 }
