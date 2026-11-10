@@ -1,6 +1,6 @@
-# Solar Explorer — COMP4422 M1
+# Solar Explorer — COMP4422 M3
 
-An interactive, **static** solar-system scene built with JavaScript and **raw WebGL2**. No rendering framework, matrix library, external JavaScript package, or build step is used.
+An interactive **animated** solar-system scene built with JavaScript and **raw WebGL2**. No rendering framework, matrix library, external JavaScript package, or build step is used.
 
 ## Run
 

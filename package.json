@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "COMP4422 M1: a solar-system explorer built with raw WebGL2",
+  "description": "COMP4422 M3: WebGL2 solar system with Blinn-Phong lighting, scene graph, and interactive optical classes",
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
