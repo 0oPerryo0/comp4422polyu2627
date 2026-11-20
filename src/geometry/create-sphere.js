@@ -29,6 +29,11 @@ export function createSphere(latitudeSegments = 32, longitudeSegments = 48) {
       const y = Math.cos(theta);
       const z = Math.sin(theta) * Math.sin(phi);
       positions.push(x, y, z);
+
+      // Normal is the normalized position for a unit sphere
+      const nx = Math.sin(theta) * Math.cos(phi);
+      const ny = Math.cos(theta);
+      const nz = Math.sin(theta) * Math.sin(phi);
       normals.push(x, y, z);
       uvs.push(longitude / longitudeSegments, 1 - latitude / latitudeSegments);
       const tone = 0.68 + 0.32 * ((y + 1) / 2);

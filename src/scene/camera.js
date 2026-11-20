@@ -10,26 +10,34 @@ export class OrbitCamera {
     this.far = 500;
     this.keys = new Set();
     this.drag = null;
+    this.followBody = null;
     this.reset();
     this.bindControls();
   }
 
   reset() {
+    this.followBody = null;
     this.target = Vec3.create();
     this.yaw = 0.42;
     this.pitch = 0.66;
-    this.distance = 90;
+    this.distance = 130;
     this.minDistance = 5;
-    this.maxDistance = 125;
+    this.maxDistance = 220;
   }
 
-  focus(position, radius) {
-    this.target = Vec3.create(...position);
-    this.minDistance = Math.max(radius * 1.8, 0.8);
-    this.distance = Math.max(radius * 6, 4);
+  focus(body) {
+    this.followBody = body;
+    this.target = Vec3.create(...body.position);
+    this.minDistance = Math.max(body.radius * 1.8, 0.8);
+    this.distance = Math.max(body.radius * 6, 4);
   }
 
   get eye() {
+    if (this.followBody) {
+      this.target[0] = this.followBody.position[0];
+      this.target[1] = this.followBody.position[1];
+      this.target[2] = this.followBody.position[2];
+    }
     const horizontal = this.distance * Math.cos(this.pitch);
     return Vec3.add(
       this.target,
@@ -46,7 +54,6 @@ export class OrbitCamera {
   }
 
   verticalFieldOfView(aspect) {
-    // Preserve the horizontal field of view on narrow screens instead of cropping.
     return 2 * Math.atan(Math.tan(this.fieldOfView / 2) / Math.min(aspect, 1));
   }
 
@@ -59,13 +66,11 @@ export class OrbitCamera {
     );
   }
 
-  // move the camera around the ball
   orbit(dx, dy) {
     this.yaw -= dx * 0.006;
     this.pitch = clamp(this.pitch + dy * 0.006, -1.35, 1.35);
   }
 
-  // bring the camera closer/further
   zoom(amount) {
     this.distance = clamp(
       this.distance * Math.exp(amount),
@@ -74,7 +79,6 @@ export class OrbitCamera {
     );
   }
 
-  // move the camera around
   pan(dx, dy) {
     const backward = Vec3.normalize(Vec3.subtract(this.eye, this.target));
     const right = Vec3.normalize(Vec3.cross(Vec3.create(0, 1, 0), backward));
@@ -82,14 +86,12 @@ export class OrbitCamera {
     const height = Math.max(this.canvas.clientHeight, 1);
     const aspect = Math.max(this.canvas.clientWidth, 1) / height;
     const unitsPerPixel =
-      (2 * this.distance * Math.tan(this.verticalFieldOfView(aspect) / 2)) /
-      height;
+      (2 * this.distance * Math.tan(this.verticalFieldOfView(aspect) / 2)) / height;
     const horizontal = Vec3.scale(right, -dx * unitsPerPixel);
     const vertical = Vec3.scale(up, dy * unitsPerPixel);
     this.target = Vec3.add(this.target, Vec3.add(horizontal, vertical));
   }
 
-  // frequent check of keys to update on call
   update(deltaTime) {
     const pixels = deltaTime * 150;
     if (this.keys.has('ArrowLeft')) this.orbit(pixels, 0);
@@ -104,7 +106,6 @@ export class OrbitCamera {
     if (this.keys.has('-')) this.zoom(deltaTime);
   }
 
-  // add event listeners to every camera controller
   bindControls() {
     const canvas = this.canvas;
     canvas.addEventListener('contextmenu', (event) => event.preventDefault());
@@ -140,9 +141,7 @@ export class OrbitCamera {
     };
 
     canvas.addEventListener('pointerup', endDrag);
-
     canvas.addEventListener('pointercancel', endDrag);
-
     canvas.addEventListener('lostpointercapture', endDrag);
 
     canvas.addEventListener(
@@ -162,17 +161,8 @@ export class OrbitCamera {
     );
 
     const supported = new Set([
-      'ArrowLeft',
-      'ArrowRight',
-      'ArrowUp',
-      'ArrowDown',
-      'w',
-      'a',
-      's',
-      'd',
-      '+',
-      '=',
-      '-',
+      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+      'w', 'a', 's', 'd', '+', '=', '-',
     ]);
 
     canvas.addEventListener('keydown', (event) => {
@@ -190,7 +180,6 @@ export class OrbitCamera {
     });
 
     canvas.addEventListener('blur', () => this.keys.clear());
-
     window.addEventListener('blur', () => this.keys.clear());
   }
 }

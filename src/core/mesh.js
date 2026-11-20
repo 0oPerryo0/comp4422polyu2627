@@ -1,7 +1,3 @@
-/*
-  webgl mesh wrapper class
-*/
-
 export class Mesh {
   constructor(gl, data, mode = gl.TRIANGLES) {
     this.gl = gl;
@@ -19,10 +15,14 @@ export class Mesh {
     this.attribute(1, data.colors);
     this.attribute(2, data.uvs);
 
+    if (data.normals && data.normals.length > 0) {
+      this.attribute(3, data.normals);
+    } else {
+      this.attribute(3, new Float32Array(data.positions.length));
+    }
+
     const indexBuffer = gl.createBuffer();
     this.buffers.push(indexBuffer);
-
-    // ELEMENT_ARRAY_BUFFER binding is stored inside the currently bound VAO.
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data.indices, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
@@ -37,22 +37,19 @@ export class Mesh {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.enableVertexAttribArray(location);
-    gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
 
     const size = location === 2 ? 2 : 3;
     gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
   }
 
-  // draw the 3D shape
   draw() {
     const gl = this.gl;
     gl.bindVertexArray(this.vao);
     gl.drawElements(this.mode, this.count, this.indexType, 0);
   }
 
-  // free the GPU buffers and VAO
   dispose() {
     for (const buffer of this.buffers) this.gl.deleteBuffer(buffer);
-    this.gl.deleteVertexArray(this.vao);
+    gl.deleteVertexArray(this.vao);
   }
 }
